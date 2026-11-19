@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Request {{ tr.reference_number }}</h1>
+      <p class="text-gray-600 text-sm">Transport request details</p>
+    </div>
+    <div class="flex gap-2">
+      {% if 'approval:action' in request.session.get('_perms', []) and tr.status in ('pending_departmental_approval','pending_transport_review') %}
+      <button class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700" onclick="document.getElementById('approveForm').submit()">Approve</button>
+      <button class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700" onclick="document.getElementById('rejectForm').submit()">Reject</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+      <div class="bg-white shadow rounded-xl border border-gray-200 p-6">
+        <h3 class="text-sm font-semibold text-gray-700 mb-4">Request details</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div><p class="text-gray-500 text-xs uppercase">Employee</p><p>{{ tr.employee.full_name if tr.employee else '-' }}</p></div>
+          <div><p class="text-gray-500 text-xs uppercase">Employee number</p><p class="font-mono">{{ tr.employee.employee_number if tr.employee else '-' }}</p></div>
+          <div><p class="text-gray-500 text-xs uppercase">Directorate</p><p>{{ tr.directorate.name if tr.directorate else '-' }}</p></div>
+          <div><p class="text-gray-500 text-xs uppercase">Department</p><p>{{ tr.department.name if tr.department else '-' }}</p></div>
+          <div><p class="text-gray-500 text-xs uppercase">Section</p><p>{{ tr.section.name if tr.section else '-' }}</p></div>
+          <div><p class="text-gray-500 text-xs uppercase">Category</p><p>{{ tr.category.name if tr.category else '-' }}</p></div>
+          <div><p class="text-gray-500 text-xs uppercase">Status</p>
+            <span class="status-badge bg-{{ tr.status }}">{{ status_label(tr.status, current_lang(request)) }}</span>
+          </div>
+          <div><p class="text-gray-500 text-xs uppercase">Priority</p><p>{{ tr.priority }}</p></div>
+          <div><p class="text-gray-500 text-xs uppercase">Purpose</p><p>{{ tr.purpose }}</p></div>
+          <div><p class="text-gray-500 text-xs uppercase">From &rarr; To</p><p>{{ tr.departure_location }} &rarr; {{ tr.destination }}</p></div>
+          <div><p class="text-gray-500 text-xs uppercase">Travel date</p><p>{{ tr.travel_date.strftime('%d/%m/%Y') if tr.travel_date else '-' }}</p></div>
+          <div><p class="text-gray-500 text-xs uppercase">Passengers</p><p>{{ tr.number_of_passengers }}</p></div>
+          <div class="md:col-span-2"><p class="text-gray-500 text-xs uppercase">Equipment / luggage</p><p>{{ tr.equipment_luggage or '-' }}</p></div>
+          <div class="md:col-span-2"><p class="text-gray-500 text-xs uppercase">Remarks</p><p>{{ tr.remarks or '-' }}</p></div>
+        </div>
+        {% if tr.category and tr.category.code == 'news_gathering' %}
+        <div class="mt-6 border-t border-gray-200 pt-6">
+          <h4 class="text-sm font-semibold text-gray-700 mb-3">News coverage details</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div><p class="text-gray-500 text-xs uppercase">Assignment title</p><p>{{ tr.assignment_title or '-' }}</p></div>
+            <div><p class="text-gray-500 text-xs uppercase">Coverage subject</p><p>{{ tr.coverage_subject or '-' }}</p></div>
+            <div><p class="text-gray-500 text-xs uppercase">Media outlet</p><p>{{ tr.media_outlet.name if tr.media_outlet else '-' }}</p></div>
+            <div><p class="text-gray-500 text-xs uppercase">Urgency</p><p>{{ tr.urgency_level or '-' }}</p></div>
+            <div><p class="text-gray-500 text-xs uppercase">Crew</p><p>{{ tr.crew_count or '-' }}</p></div>
+            <div><p class="text-gray-500 text-xs uppercase">Editor / supervisor</p><p>{{ tr.assignment_editor or '-' }}</p></div>
+            <div class="md:col-span-2"><p class="text-gray-500 text-xs uppercase">Description</p><p>{{ tr.assignment_description or '-' }}</p></div>
+            <div class="md:col-span-2"><p class="text-gray-500 text-xs uppercase">Additional destinations</p><p>{{ tr.multiple_destinations or '-' }}</p></div>
+          </div>
+        </div>
+        {% endif %}
+        {% if tr.rejection_reason %}
+        <div class="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+          <strong>Rejection reason:</strong> {{ tr.rejection_reason }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="lg:col-span-1">
+      <div class="bg-white shadow rounded-xl border border-gray-200 p-6">
+        <h3 class="text-sm font-semibold text-gray-700 mb-4">Timeline</h3>
+        <div class="space-y-4">
+          <div class="flex items-start gap-3">
+            <div class="w-2 h-2 rounded-full bg-blue-500 mt-1"></div>
+            <div>
+              <p class="text-sm font-medium">Submitted</p>
+              <p class="text-xs text-gray-500">{{ tr.created_at.strftime('%d/%m/%Y %H:%M') if tr.created_at else '-' }}</p>
+            </div>
+          </div>
+          {% if tr.department_approved_at %}
+          <div class="flex items-start gap-3">
+            <div class="w-2 h-2 rounded-full bg-green-500 mt-1"></div>
+            <div>
+              <p class="text-sm font-medium">Departmental approval</p>
+              <p class="text-xs text-gray-500">{{ tr.department_approved_at.strftime('%d/%m/%Y %H:%M') }}</p>
+            </div>
+          </div>
+          {% endif %}
+          {% if tr.approved_at %}
+          <div class="flex items-start gap-3">
+            <div class="w-2 h-2 rounded-full bg-green-500 mt-1"></div>
+            <div>
+              <p class="text-sm font-medium">Approved</p>
+              <p class="text-xs text-gray-500">{{ tr.approved_at.strftime('%d/%m/%Y %H:%M') }}</p>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="mt-6 bg-white shadow rounded-xl border border-gray-200 p-6">
+        <h3 class="text-sm font-semibold text-gray-700 mb-4">Approval history</h3>
+        {% if approvals %}
+        <div class="space-y-3">
+          {% for a in approvals %}
+          <div class="p-3 border rounded-lg bg-gray-50 text-sm">
+            <p class="font-medium">{{ a.action }} by {{ 'user #'~a.approver_id }}</p>
+            <p class="text-xs text-gray-500">{{ a.comments or '-' }}</p>
+            <p class="text-xs text-gray-400">{{ a.created_at.strftime('%d/%m/%Y %H:%M') if a.created_at else '-' }}</p>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-xs text-gray-500">No approvals yet.</p>
+        {% endif %}
+      </div>
+
+      <!-- Approve form (hidden, submitted via buttons above) -->
+      <form id="approveForm" method="post" action="/requests/{{ tr.id }}/approve" class="hidden">
+        <input type="hidden" name="comments" value="Approved via dashboard">
+      </form>
+      <form id="rejectForm" method="post" action="/requests/{{ tr.id }}/reject" class="hidden">
+        <input type="hidden" name="rejection_reason" value="">
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+  <div class="border-b border-gray-200 pb-4"><h1 class="text-2xl font-bold text-gray-800">Audit trail</h1><p class="text-gray-600 text-sm">Immutable, tamper-evident record of critical transactions</p></div>
+  <div class="bg-white shadow rounded-xl border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 sticky top-0"><tr><th class="px-4 py-2 text-left">Time</th><th class="px-4 py-2 text-left">User</th><th class="px-4 py-2 text-left">Action</th><th class="px-4 py-2 text-left">Table</th><th class="px-4 py-2 text-left">Record</th><th class="px-4 py-2 text-left">Reason</th><th class="px-4 py-2 text-left">IP</th></tr></thead>
+        <tbody class="divide-y divide-gray-100">
+        {% for a in logs %}
+        <tr><td class="px-4 py-3 text-gray-500 text-xs font-mono">{{ a.created_at.strftime('%d/%m/%Y %H:%M') if a.created_at else '-' }}</td><td class="px-4 py-3">{{ a.user.username if a.user else 'system' }}</td><td class="px-4 py-3 font-medium">{{ a.action }}</td><td class="px-4 py-3 text-xs">{{ a.table_name }}</td><td class="px-4 py-3 text-xs font-mono">{{ a.record_id or '-' }}</td><td class="px-4 py-3 text-sm">{{ a.reason or '-' }}</td><td class="px-4 py-3 text-xs">{{ a.ip_address or '-' }}</td></tr>
+        {% else %}
+        <tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">No audit records</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

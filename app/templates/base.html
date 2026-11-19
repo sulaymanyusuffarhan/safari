@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang(request) or 'sw' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page_title or settings.APP_NAME }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="/static/images/emblem.png">
+  <style>
+    body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+    .tbc-blue { color: #0b5ed6; }
+    .bg-tbc-blue { background-color: #0b5ed6; }
+    .border-tbc-blue { border-color: #0b5ed6; }
+    .text-tbc-blue { color: #0b5ed6; }
+    .sidebar-item.active { background-color: rgba(11, 94, 214, 0.10); border-left: 3px solid #0b5ed6; color: #0b5ed6; }
+    .status-badge { display: inline-flex; align-items: center; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+    .bg-available { background: #dcfce7; color: #166534; }
+    .bg-assigned { background: #bfdbfe; color: #1d4ed8; }
+    .bg-in_use { background: #fef3c7; color: #92400e; }
+    .bg-under_maintenance { background: #fee2e2; color: #991b1b; }
+    .bg-out_of_service { background: #f3f4f6; color: #374151; }
+    .bg-reserved { background: #e0e7ff; color: #4338ca; }
+    .bg-on_hold { background: #f3f4f6; color: #4b5563; }
+    .bg-returning { background: #fce7f3; color: #9d174d; }
+    .bg-under_repair { background: #fef2f2; color: #7f1d1d; }
+    .bg-temporarily_unavailable { background: #e5e7eb; color: #374151; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .skeleton { background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%); background-size: 200% 100%; animation: pulse 1.2s infinite; border-radius: 0.5rem; }
+    @keyframes pulse { 0% { background-position: 200% 0%; } 100% { background-position: -200% 0%; } }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 text-gray-900 h-screen flex flex-col overflow-hidden">
+
+  <!-- Top navbar -->
+  <header class="bg-white border-b border-gray-200 flex items-center justify-between px-4 py-2.5 z-20 shrink-0">
+    <div class="flex items-center gap-3 shrink-0">
+      <button id="menuToggle" class="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg" aria-label="Open menu">
+        <i class="fas fa-bars text-lg"></i>
+      </button>
+      <a href="/" class="flex items-center gap-2 tbc-blue font-bold text-lg tracking-tight hover:opacity-80 transition">
+        <img src="/static/images/tbc-logo.webp" alt="TBC logo" class="h-8 w-auto">
+        <span class="hidden sm:block">{{ settings.INSTITUTION_SHORT }}</span>
+      </a>
+    </div>
+
+    <div class="hidden md:flex items-center gap-6 shrink-0 text-xs font-medium text-gray-600">
+      <span class="flex items-center gap-1 text-tbc-blue"><i class="fas fa-building"></i> {{ settings.INSTITUTION_SHORT }} Fleet &amp; Transport</span>
+      <span class="hidden sm:block text-gray-400">|</span>
+      <a href="/language/en" class="{{ 'text-tbc-blue font-semibold' if current_lang(request)=='en' else 'text-gray-600 hover:text-tbc-blue' }} px-2">{{ t('english', current_lang(request)) }}</a>
+      <a href="/language/sw" class="{{ 'text-tbc-blue font-semibold' if current_lang(request)=='sw' else 'text-gray-600 hover:text-tbc-blue' }} px-2">{{ t('kiswahili', current_lang(request)) }}</a>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full text-xs font-medium text-gray-700">
+        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+        {{ user.employee.full_name if user.employee else user.username }}
+      </div>
+      <div class="relative inline-block">
+        <button class="flex items-center gap-2 p-2 text-gray-600 hover:bg-gray-100 rounded-full" aria-label="User menu">
+          <span class="text-sm font-semibold hidden sm:block">{{ user.employee.full_name if user.employee else user.username }}</span>
+          <img src="/static/images/emblem.png" alt="avatar" class="w-7 h-7 rounded-full border border-gray-200 bg-gray-100">
+        </button>
+        <div class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 hidden md:block z-30" id="userDropdown">
+          <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"><i class="fas fa-user mr-2 text-tbc-blue"></i> {{ t('profile', current_lang(request)) }}</a>
+          <a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"><i class="fas fa-cog mr-2 text-tbc-blue"></i> {{ t('settings', current_lang(request)) }}</a>
+          <hr class="my-1 border-gray-100">
+          <a href="/auth/logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-sign-out-alt mr-2"></i> {{ t('logout', current_lang(request)) }}</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Flash / alert banner -->
+  {% with messages = request.session.get('_flash', []) %}
+  {% if messages %}
+  <div class="fixed inset-x-0 top-16 z-40 flex justify-center px-4 sm:px-6 lg:px-8 pointer-events-none">
+    {% for msg in messages %}
+    <div class="pointer-events-auto max-w-md w-full rounded-lg border shadow-lg p-4
+      {% if msg.category=='error' %}border-red-200 bg-red-50 text-red-800
+      {% elif msg.category=='success' %}border-green-200 bg-green-50 text-green-800
+      {% elif msg.category=='warning' %}border-amber-200 bg-amber-50 text-amber-800
+      {% else %}border-blue-200 bg-blue-50 text-blue-800{% endif %}"
+         role="alert">
+      <div class="flex items-start gap-3">
+        <i class="fas {% if msg.category=='error' %}fa-circle-exclamation
+          {% elif msg.category=='success' %}fa-check-circle
+          {% elif msg.category=='warning' %}fa-triangle-exclamation
+          {% else %}fa-info-circle{% endif %} mt-0.5"></i>
+        <p class="text-sm">{{ msg.text }}</p>
+      </div>
+      <button onclick="this.closest('.max-w-md').remove()" class="absolute right-2 top-2 opacity-50 hover:opacity-100"><i class="fas fa-times"></i></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  <div class="flex flex-1 relative">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="bg-white border-r border-gray-200 flex flex-col z-10 transition-all duration-300 fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 md:w-64">
+      <div class="p-4 border-b border-gray-100">
+        <div class="flex items-center gap-2">
+          <img src="/static/images/emblem.png" alt="emblem" class="h-7 w-7 rounded">
+          <div>
+            <div class="font-bold text-sm text-gray-800 leading-tight">{{ settings.INSTITUTION_SHORT }}</div>
+            <div class="text-[10px] text-gray-500 font-medium uppercase tracking-wider">{{ t('management', current_lang(request)) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto p-2 space-y-1" aria-label="Main navigation">
+        <div class="px-3 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ t('dashboard', current_lang(request)) }}</div>
+
+        {% set perms = request.session.get('_perms', []) %}
+        {% set user_role = user.role.code if user.role else '' %}
+
+        <a href="/dashboard" class="sidebar-item active block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
+          <i class="fas fa-chart-pie w-5 text-tbc-blue"></i> {{ t('dashboard', current_lang(request)) }}
+        </a>
+
+        {% if 'request:create' in perms or user_role=='employee' %}
+        <div class="px-3 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ t('requests', current_lang(request)) }}</div>
+        <a href="/requests/new" class="sidebar-item block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
+          <i class="fas fa-file-signature w-5 text-tbc-blue"></i> {{ t('submit', current_lang(request)) }}
+        </a>
+        <a href="/requests/my" class="sidebar-item block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
+          <i class="fas fa-list w-5 text-tbc-blue"></i> {{ t('my_requests', current_lang(request)) }}
+        </a>
+        {% endif %}
+
+        {% if 'vehicle:read' in perms or user_role in ('transport_officer','system_administrator','management_director_general') %}
+        <div class="px-3 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">Fleet</div>
+        <a href="/vehicles" class="sidebar-item block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
+          <i class="fas fa-bus w-5 text-tbc-blue"></i> {{ t('vehicles', current_lang(request)) }}
+        </a>
+        <a href="/drivers" class="sidebar-item block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
+          <i class="fas fa-user-tie w-5 text-tbc-blue"></i> {{ t('driver', current_lang(request)) }}s
+        </a>
+        <a href="/allocations" class="sidebar-item block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
+          <i class="fas fa-tasks w-5 text-tbc-blue"></i> {{ t('allocation', current_lang(request)) }}
+        </a>
+        {% endif %}
+
+        {% if 'trip:read' in perms or user_role=='driver' %}
+        <a href="/trips" class="sidebar-item block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
+          <i class="fas fa-route w-5 text-tbc-blue"></i> {{ t('trips', current_lang(request)) }}
+        </a>
+        <a href="/logbooks" class="sidebar-item block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
+          <i class="fas fa-book w-5 text-tbc-blue"></i> {{ t('logbook', current_lang(request)) }}
+        </a>
+        {% endif %}
+
+        {% if 'fuel:read' in perms or user_role=='transport_officer' %}
+        <a href="/fuel" class="sidebar-item block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
+          <i class="fas fa-gas-pump w-5 text-tbc-blue"></i> {{ t('fuel', current_lang(request)) }}
+        </a>
+        {% endif %}
+
+        {% if 'maintenance:read' in perms or user_role=='transport_officer' %}
+        <a href="/maintenance" class="sidebar-item block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
+          <i class="fas fa-tools w-5 text-tbc-blue"></i> {{ t('maintenance', current_lang(request)) }}
+        </a>
+        {% endif %}
+
+        {% if 'inspection:read' in perms or user_role=='driver' %}
+        <a href="/inspections" class="sidebar-item block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
+          <i class="fas fa-clipboard-check w-5 text-tbc-blue"></i> {{ t('inspection', current_lang(request)) }}
+        </a>
+        {% endif %}
+
+        {% if 'breakdown:read' in perms or user_role=='driver' %}
+        <a href="/breakdowns" class="sidebar-item block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
+          <i class="fas fa-exclamation-triangle w-5 text-tbc-blue"></i> {{ t('breakdown', current_lang(request)) }}
+        </a>
+        {% endif %}
+
+        {% if 'approval:read' in perms or user_role in ('department_head','transport_supervisor') %}
+        <div class="px-3 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ t('approvals', current_lang(request)) }}</div>
+        <a href="/requests/pending-approval" class="sidebar-item block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
+          <i class="fas fa-check-circle w-5 text-tbc-blue"></i> {{ t('pending', current_lang(request)) }}
+        </a>
+        {% endif %}
+
+        {% if 'report:read' in perms or user_role in ('management_director_general','finance_accounts','internal_audit') %}
+        <div class="px-3 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ t('reports', current_lang(request)) }}</div>
+        <a href="/reports" class="sidebar-item block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
+          <i class="fas fa-file-alt w-5 text-tbc-blue"></i> {{ t('reporting', current_lang(request)) }}
+        </a>
+        {% endif %}
+
+        {% if 'audit:read' in perms or user_role=='internal_audit' %}
+        <a href="/audit" class="sidebar-item block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
+          <i class="fas fa-shield-halved w-5 text-tbc-blue"></i> {{ t('audit', current_lang(request)) }}
+        </a>
+        {% endif %}
+
+        {% if 'admin:read' in perms or user_role=='system_administrator' %}
+        <div class="px-3 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ t('admin', current_lang(request)) }}</div>
+        <a href="/admin" class="sidebar-item block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
+          <i class="fas fa-users-cog w-5 text-tbc-blue"></i> {{ t('admin', current_lang(request)) }}
+        </a>
+        {% endif %}
+      </nav>
+
+      <div class="p-3 border-t border-gray-100">
+        <a href="/user-manual" class="block px-3 py-2.5 text-sm font-medium text-gray-600 rounded-lg flex items-center gap-3 hover:bg-gray-50 transition">
+          <i class="fas fa-book-open w-5 text-gray-400"></i> {{ t('user_manual', current_lang(request)) }}
+        </a>
+      </div>
+    </aside>
+
+    <!-- Sidebar overlay (mobile) -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black opacity-50 z-20 hidden md:hidden" onclick="closeSidebar()"></div>
+
+    <!-- Main content -->
+    <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative z-0">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <footer class="bg-white border-t border-gray-200 px-4 py-3 text-xs text-gray-500 shrink-0 text-center">
+    {{ settings.INSTITUTION_NAME }} &bull; {{ settings.INSTITUTION_MOTTO }} &bull; eGA/EXT/APA/005 v3.0
+  </footer>
+
+  <script>
+    function toggleSidebar(){ const s=document.getElementById('sidebar'); const o=document.getElementById('sidebarOverlay'); const hidden=s.classList.contains('-translate-x-full'); if(hidden){s.classList.remove('-translate-x-full');o.classList.remove('hidden');}else{s.classList.add('-translate-x-full');o.classList.add('hidden');} }
+    function closeSidebar(){ document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('sidebarOverlay').classList.add('hidden'); }
+    document.getElementById('menuToggle')?.addEventListener('click', toggleSidebar);
+    setTimeout(()=>{ document.querySelectorAll('.fixed.inset-x-0.top-16 .max-w-md').forEach(el=>el.remove()); }, 8000);
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

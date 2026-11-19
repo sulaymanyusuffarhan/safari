@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <div class="bg-white shadow rounded-xl border border-gray-200 p-6">
+    <h2 class="text-lg font-bold text-gray-800 mb-4">{{ page_title }}</h2>
+    <form method="post" action="{% if vehicle %}/vehicles/{{ vehicle.id }}/update{% else %}/vehicles/create{% endif %}" class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Registration number <span class="text-red-500">*</span></label>
+          <input name="registration_number" required value="{{ vehicle.registration_number if vehicle else '' }}"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Make</label>
+          <input name="make" required value="{{ vehicle.make if vehicle else '' }}"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Model</label>
+          <input name="model" required value="{{ vehicle.model if vehicle else '' }}"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Year of manufacture</label>
+          <input name="year_of_manufacture" type="number" value="{{ vehicle.year_of_manufacture if vehicle else '' }}"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <select name="category_id"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+            <option value="">Select</option>
+            {% for c in categories %}
+            <option value="{{ c.id }}" {% if vehicle and vehicle.category_id==c.id %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Fuel type</label>
+          <select name="fuel_type"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+            <option value="diesel" {% if not vehicle or vehicle.fuel_type=='diesel' %}selected{% endif %}>Diesel</option>
+            <option value="petrol" {% if vehicle and vehicle.fuel_type=='petrol' %}selected{% endif %}>Petrol</option>
+            <option value="electric" {% if vehicle and vehicle.fuel_type=='electric' %}selected{% endif %}>Electric</option>
+            <option value="hybrid" {% if vehicle and vehicle.fuel_type=='hybrid' %}selected{% endif %}>Hybrid</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Passenger capacity</label>
+          <input name="passenger_capacity" type="number" value="{{ vehicle.passenger_capacity if vehicle else 5 }}"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Acquisition date</label>
+          <input name="acquisition_date" type="date"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Acquisition cost (TZS)</label>
+          <input name="acquisition_cost" type="number" step="0.01"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <select name="status"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+            <option value="available" {% if not vehicle or vehicle.status=='available' %}selected{% endif %}>Available</option>
+            <option value="reserved" {% if vehicle and vehicle.status=='reserved' %}selected{% endif %}>Reserved</option>
+            <option value="assigned" {% if vehicle and vehicle.status=='assigned' %}selected{% endif %}>Assigned</option>
+            <option value="in_use" {% if vehicle and vehicle.status=='in_use' %}selected{% endif %}>In Use</option>
+            <option value="under_maintenance" {% if vehicle and vehicle.status=='under_maintenance' %}selected{% endif %}>Under Maintenance</option>
+            <option value="out_of_service" {% if vehicle and vehicle.status=='out_of_service' %}selected{% endif %}>Out of Service</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Owned by department</label>
+          <select name="owned_by_department_id"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+            <option value="">Select</option>
+            {% for d in departments %}
+            <option value="{{ d.id }}" {% if vehicle and vehicle.owned_by_department_id==d.id %}selected{% endif %}>{{ d.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Assigned driver</label>
+          <select name="assigned_driver_id"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+            <option value="">Unassigned</option>
+            {% for d in drivers %}
+            <option value="{{ d.id }}" {% if vehicle and vehicle.assigned_driver_id==d.id %}selected{% endif %}>
+              {{ d.employee.full_name if d.employee else d }} ({{ d.licence_number }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+          <textarea name="notes" rows="2">{{ vehicle.notes if vehicle else '' }}</textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
+        <a href="/vehicles/" class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Cancel</a>
+        <button type="submit" class="bg-tbc-blue text-white px-4 py-2 rounded-lg hover:bg-tbc-blue/90 transition">Save vehicle</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

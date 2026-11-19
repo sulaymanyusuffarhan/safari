@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.env
+
+# SQLite database
+*.db
+*.db.bak*
+*.sqlite
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Logs
+server.log
+*.log
+
+# Uploads (user content)
+app/static/uploads/
+
+# Arena
+.arena/
