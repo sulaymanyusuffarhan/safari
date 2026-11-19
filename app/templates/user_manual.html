@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+  <div class="border-b border-gray-200 pb-4"><h1 class="text-2xl font-bold text-gray-800">User manual</h1><p class="text-gray-600 text-sm">TBC Fleet and Transport Management System (TBC-FTMS)</p></div>
+  <div class="bg-white shadow rounded-xl border border-gray-200 p-6">
+    <h3 class="text-sm font-semibold text-gray-700 mb-3">How to use TBC-FTMS</h3>
+    <ul class="list-disc pl-6 space-y-2 text-sm text-gray-700">
+      <li><strong>Request transport:</strong> Employees submit a transport request via "Request transport", selecting category, route, date, passengers and purpose.</li>
+      <li><strong>Approval:</strong> Department heads and transport supervisors review and approve/reject requests. A rejection reason is mandatory.</li>
+      <li><strong>Allocation:</strong> The Transport Officer assigns a suitable available vehicle and driver. The system prevents double-booking and checks capacity.</li>
+      <li><strong>Journey:</strong> Drivers start a journey, record odometer readings, and mark completion. Distance is calculated automatically.</li>
+      <li><strong>Logbook:</strong> Every journey becomes an electronic logbook entry with full correction history.</li>
+      <li><strong>Fuel:</strong> Record fuel transactions linked to vehicles, drivers and trips.</li>
+      <li><strong>Maintenance:</strong> Log maintenance and repair records; track costs and status.</li>
+      <li><strong>Breakdowns:</strong> Drivers report breakdowns; the vehicle is marked out of service until cleared.</li>
+      <li><strong>Inspections:</strong> Record before/after-trip vehicle inspections.</li>
+      <li><strong>Reports:</strong> View summaries and export transport request data as CSV.</li>
+      <li><strong>Audit:</strong> Auditors view the immutable audit trail of who did what and when.</li>
+      <li><strong>Language:</strong> Switch between Kiswahili and English using the top bar.</li>
+    </ul>
+    <p class="mt-4 text-sm text-gray-500"><strong>Standard:</strong> Developed per eGA/EXT/APA/005 v3.0 (e-Government application standards). <strong>Motto:</strong> {{ motto }}</p>
+  </div>
+</div>
+{% endblock %}

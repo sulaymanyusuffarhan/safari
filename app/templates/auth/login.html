@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+  .login-panel { background: linear-gradient(135deg, #0b5ed6 0%, #1466c8 100%); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="flex flex-1 items-center justify-center p-4 sm:p-8">
+  <div class="w-full max-w-md login-panel rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
+    <div class="absolute top-0 right-0 p-4 opacity-10">
+      <i class="fas fa-building text-9xl"></i>
+    </div>
+    <div class="relative z-10 flex flex-col items-center gap-4 mb-6">
+      <img src="/static/images/tbc-logo.webp" alt="TBC" class="h-16 w-auto">
+      <h2 class="text-2xl font-bold">{{ settings.INSTITUTION_SHORT }}</h2>
+      <p class="text-xs text-blue-100 uppercase tracking-widest">{{ settings.INSTITUTION_MOTTO }}</p>
+    </div>
+
+    {% if error %}
+    <div class="bg-red-500/20 border border-red-500/50 text-red-100 px-4 py-3 rounded-lg text-sm mb-6">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-blue-100 mb-1">{{ t('username', current_lang(request)) }}</label>
+        <input name="username" type="text" required
+          class="w-full px-3 py-2 bg-white/10 border border-white/30 rounded-lg text-white placeholder-blue-200 focus:ring-2 focus:ring-white focus:outline-none transition"
+          placeholder="e.g. admin">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-blue-100 mb-1">{{ t('password', current_lang(request)) }}</label>
+        <input name="password" type="password" required
+          class="w-full px-3 py-2 bg-white/10 border border-white/30 rounded-lg text-white placeholder-blue-200 focus:ring-2 focus:ring-white focus:outline-none transition"
+          placeholder="••••••••">
+      </div>
+      <div class="flex items-center gap-2">
+        <input id="remember" type="checkbox" class="w-4 h-4 rounded bg-white/10 border-white/30 text-blue-500 focus:ring-blue-500">
+        <label for="remember" class="text-sm text-blue-100">{{ t('remember_me', current_lang(request)) }}</label>
+      </div>
+      <button type="submit"
+        class="w-full bg-white text-tbc-blue font-semibold py-3 rounded-lg hover:bg-gray-100 transition flex items-center justify-center gap-2">
+        <i class="fas fa-sign-in-alt"></i> {{ t('sign_in', current_lang(request)) }}
+      </button>
+    </form>
+
+    <p class="mt-6 text-xs text-blue-200 text-center">
+      {{ t('institution', current_lang(request)) }} &bull; Fleet &amp; Transport Management System
+    </p>
+  </div>
+</div>
+{% endblock %}

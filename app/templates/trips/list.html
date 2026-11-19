@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Journeys &amp; logbook</h1>
+      <p class="text-gray-600 text-sm">Electronic vehicle logbook entries</p>
+    </div>
+    {% if 'trip:create' in request.session.get('_perms', []) %}
+    <a href="/trips/new" class="bg-tbc-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-tbc-blue/90 transition">
+      <i class="fas fa-plus"></i> Start journey
+    </a>
+    {% endif %}
+  </div>
+
+  <div class="bg-white shadow rounded-xl border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 sticky top-0">
+          <tr>
+            <th class="px-4 py-2 text-left">Reference</th>
+            <th class="px-4 py-2 text-left">Vehicle</th>
+            <th class="px-4 py-2 text-left">Driver</th>
+            <th class="px-4 py-2 text-left">Route</th>
+            <th class="px-4 py-2 text-left">Departure</th>
+            <th class="px-4 py-2 text-left">Distance</th>
+            <th class="px-4 py-2 text-left">Status</th>
+            <th class="px-4 py-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for t in trips %}
+          <tr>
+            <td class="px-4 py-3 font-mono text-xs">{{ t.reference }}</td>
+            <td class="px-4 py-3">{{ t.vehicle.registration_number if t.vehicle else '-' }}</td>
+            <td class="px-4 py-3">{{ t.driver.employee.full_name if t.driver and t.driver.employee else '-' }}</td>
+            <td class="px-4 py-3 text-sm">{{ t.start_point }} &rarr; {{ t.destination }}</td>
+            <td class="px-4 py-3 text-gray-500 text-xs">{{ t.departure_datetime.strftime('%d/%m/%Y %H:%M') if t.departure_datetime else '-' }}</td>
+            <td class="px-4 py-3 text-sm">{{ t.total_distance }} km{% if t.total_distance is none %}-{% endif %}</td>
+            <td class="px-4 py-3"><span class="status-badge bg-{{ t.status }}">{{ status_label(t.status, current_lang(request)) }}</span></td>
+            <td class="px-4 py-3">
+              <a href="/trips/{{ t.id }}/edit" class="text-xs text-tbc-blue hover:underline">Edit</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" class="px-4 py-8 text-center text-gray-500">No journeys</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

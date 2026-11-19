@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Fleet register</h1>
+      <p class="text-gray-600 text-sm">All institutional vehicles</p>
+    </div>
+    {% if 'vehicle:create' in request.session.get('_perms', []) %}
+    <a href="/vehicles/new" class="bg-tbc-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-tbc-blue/90 transition">
+      <i class="fas fa-plus"></i> Register vehicle
+    </a>
+    {% endif %}
+  </div>
+
+  <div class="bg-white shadow rounded-xl border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 sticky top-0">
+          <tr>
+            <th class="px-4 py-2 text-left">Registration</th>
+            <th class="px-4 py-2 text-left">Make / Model</th>
+            <th class="px-4 py-2 text-left">Category</th>
+            <th class="px-4 py-2 text-left">Capacity</th>
+            <th class="px-4 py-2 text-left">Status</th>
+            <th class="px-4 py-2 text-left">Driver</th>
+            <th class="px-4 py-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for v in vehicles %}
+          <tr>
+            <td class="px-4 py-3 font-mono text-xs">{{ v.registration_number }}</td>
+            <td class="px-4 py-3 text-sm">{{ v.make }} {{ v.model }}</td>
+            <td class="px-4 py-3 text-sm">{{ v.category.name if v.category else '-' }}</td>
+            <td class="px-4 py-3 text-sm">{{ v.passenger_capacity }}</td>
+            <td class="px-4 py-3"><span class="status-badge bg-{{ v.status }}">{{ vehicle_status_label(v.status, current_lang(request)) }}</span></td>
+            <td class="px-4 py-3 text-sm">{{ v.assigned_driver.employee.full_name if v.assigned_driver and v.assigned_driver.employee else '-' }}</td>
+            <td class="px-4 py-3">
+              {% if 'vehicle:status:change' in request.session.get('_perms', []) or 'vehicle:update' in request.session.get('_perms', []) %}
+              <button class="text-xs text-tbc-blue hover:underline mr-2" onclick="showStatusModal('{{ v.id }}', '{{ v.registration_number }}', '{{ v.status }}')">Change status</button>
+              {% endif %}
+              <a href="/vehicles/{{ v.id }}/edit" class="text-xs text-gray-600 hover:underline">Edit</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">No vehicles registered</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Status change modal -->
+<div id="statusModal" class="fixed inset-0 z-50 hidden">
+  <div class="fixed inset-0 bg-black opacity-50 backdrop-blur-sm" onclick="hideStatusModal()"></div>
+  <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+    <h3 class="text-lg font-bold text-gray-800 mb-4">Change vehicle status</h3>
+    <form method="post" id="statusForm" class="space-y-4">
+      <input type="hidden" name="v_id" id="modal_v_id">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Vehicle</label>
+        <input type="text" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50" id="modal_reg">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">New status</label>
+        <select name="new_status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+          <option value="available">Available</option>
+          <option value="reserved">Reserved</option>
+          <option value="assigned">Assigned</option>
+          <option value="in_use">In Use</option>
+          <option value="returning">Returning</option>
+          <option value="under_maintenance">Under Maintenance</option>
+          <option value="under_repair">Under Repair</option>
+          <option value="out_of_service">Out of Service</option>
+          <option value="temporarily_unavailable">Temporarily Unavailable</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Reason <span class="text-red-500">*</span></label>
+        <textarea name="reason" rows="2" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none"></textarea>
+        <p class="text-xs text-gray-500 mt-1">A reason is mandatory and is recorded in the audit trail.</p>
+      </div>
+      <div class="flex justify-end gap-3 pt-4">
+        <button type="button" class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg" onclick="hideStatusModal()">Cancel</button>
+        <button type="submit" class="bg-tbc-blue text-white px-4 py-2 rounded-lg hover:bg-tbc-blue/90">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function showStatusModal(id, reg, current){
+  document.getElementById('modal_v_id').value = id;
+  document.getElementById('modal_reg').value = reg;
+  document.getElementById('statusModal').classList.remove('hidden');
+}
+function hideStatusModal(){
+  document.getElementById('statusModal').classList.add('hidden');
+}
+// set form action dynamically
+document.getElementById('statusForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const id = document.getElementById('modal_v_id').value;
+  const fd = new FormData(this);
+  fetch('/vehicles/' + id + '/status', {method:'POST', body:fd, credentials:'same-origin'})
+    .then(async r => {
+      if(r.ok){ hideStatusModal(); location.reload(); }
+      else { alert('Failed to change status'); }
+    });
+});
+</script>
+{% endblock %}

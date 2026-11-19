@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">{{ t('driver', current_lang(request)) }} {{ t('dashboard', current_lang(request)) }}</h1>
+      <p class="text-gray-600 text-sm">Your assigned journeys and today's duties</p>
+    </div>
+  </div>
+
+  {% if not driver %}
+  <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+    No driver record is linked to your account. Please contact the Transport Officer.
+  </div>
+  {% else %}
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="bg-white shadow rounded-xl border border-gray-200 p-5">
+      <p class="text-xs font-semibold text-gray-500 uppercase">Licence</p>
+      <p class="text-lg font-bold text-gray-800">{{ driver.licence_number }}</p>
+      <p class="text-xs text-gray-500 mt-1">{{ driver.licence_category }}</p>
+    </div>
+    <div class="bg-white shadow rounded-xl border border-gray-200 p-5">
+      <p class="text-xs font-semibold text-gray-500 uppercase">Availability</p>
+      <p class="text-lg font-bold {% if driver.availability=='available' %}text-green-600{% else %}text-gray-600{% endif %}">{{ driver.availability }}</p>
+    </div>
+    <div class="bg-white shadow rounded-xl border border-gray-200 p-5">
+      <p class="text-xs font-semibold text-gray-500 uppercase">Assigned vehicle</p>
+      <p class="text-lg font-bold text-gray-800">{{ driver.assigned_vehicles[0].registration_number if driver.assigned_vehicles else '-' }}</p>
+    </div>
+    <div class="bg-white shadow rounded-xl border border-gray-200 p-5">
+      <p class="text-xs font-semibold text-gray-500 uppercase">Trips</p>
+      <p class="text-lg font-bold text-gray-800">{{ my_trips|length }}</p>
+    </div>
+  </div>
+
+  <div class="bg-white shadow rounded-xl border border-gray-200 p-6">
+    <h3 class="text-sm font-semibold text-gray-700 mb-4">Recent journeys</h3>
+    {% if my_trips %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500">
+          <tr>
+            <th class="px-4 py-2 text-left">Reference</th>
+            <th class="px-4 py-2 text-left">Route</th>
+            <th class="px-4 py-2 text-left">Vehicle</th>
+            <th class="px-4 py-2 text-left">Status</th>
+            <th class="px-4 py-2 text-left">Distance</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for trip in my_trips %}
+          <tr>
+            <td class="px-4 py-3 font-mono text-xs">{{ trip.reference }}</td>
+            <td class="px-4 py-3 text-sm">{{ trip.start_point }} &rarr; {{ trip.destination }}</td>
+            <td class="px-4 py-3">{{ trip.vehicle.registration_number if trip.vehicle else '-' }}</td>
+            <td class="px-4 py-3"><span class="status-badge bg-{{ trip.status }}">{{ status_label(trip.status, current_lang(request)) }}</span></td>
+            <td class="px-4 py-3 text-gray-500 text-xs">{{ trip.total_distance }} km{% if trip.total_distance is none %}-{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-8 text-gray-500">
+      <p>No journeys assigned yet.</p>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Fuel management</h1>
+      <p class="text-gray-600 text-sm">Fuel issuance, consumption and accountability</p>
+    </div>
+    {% if 'fuel:create' in request.session.get('_perms', []) %}
+    <a href="/fuel/new" class="bg-tbc-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-tbc-blue/90 transition"><i class="fas fa-plus"></i> Record fuel</a>
+    {% endif %}
+  </div>
+  <div class="bg-white shadow rounded-xl border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 sticky top-0">
+          <tr><th class="px-4 py-2 text-left">Reference</th><th class="px-4 py-2 text-left">Vehicle</th><th class="px-4 py-2 text-left">Driver</th><th class="px-4 py-2 text-left">Type</th><th class="px-4 py-2 text-left">Qty (L)</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Date</th><th class="px-4 py-2 text-left">Station</th></tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for t in txns %}
+          <tr>
+            <td class="px-4 py-3 font-mono text-xs">{{ t.reference }}</td>
+            <td class="px-4 py-3">{{ t.vehicle.registration_number if t.vehicle else '-' }}</td>
+            <td class="px-4 py-3">{{ t.driver.employee.full_name if t.driver and t.driver.employee else '-' }}</td>
+            <td class="px-4 py-3 text-sm">{{ t.fuel_type.name if t.fuel_type else '-' }}</td>
+            <td class="px-4 py-3 text-sm">{{ t.quantity }}</td>
+            <td class="px-4 py-3 text-sm">{{ "%.2f"|format(t.total_amount or 0) }}</td>
+            <td class="px-4 py-3 text-gray-500 text-xs">{{ t.transaction_date.strftime('%d/%m/%Y') if t.transaction_date else '-' }}</td>
+            <td class="px-4 py-3 text-sm">{{ t.fuel_station_supplier or '-' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" class="px-4 py-8 text-center text-gray-500">No fuel transactions</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

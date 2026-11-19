@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <div class="bg-white shadow rounded-xl border border-gray-200 p-6">
+    <h2 class="text-lg font-bold text-gray-800 mb-4">{{ page_title }}</h2>
+    <form method="post" action="{% if trip %}/trips/{{ trip.id }}/update{% else %}/trips/create{% endif %}" class="space-y-4">
+      {% if trip %}<input name="trip_id" type="hidden" value="{{ trip.id }}">{% endif %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Reference</label>
+          <input name="reference" value="{{ trip.reference if trip else '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Vehicle <span class="text-red-500">*</span></label>
+          <select name="vehicle_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+            <option value="">Select vehicle</option>
+            {% for v in vehicles %}<option value="{{ v.id }}" {% if trip and trip.vehicle_id==v.id %}selected{% endif %}>{{ v.registration_number }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Driver <span class="text-red-500">*</span></label>
+          <select name="driver_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+            <option value="">Select driver</option>
+            {% for d in drivers %}<option value="{{ d.id }}" {% if trip and trip.driver_id==d.id %}selected{% endif %}>{{ d.employee.full_name if d.employee else d }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Related request</label>
+          <select name="request_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+            <option value="">None</option>
+            {% for r in requests %}<option value="{{ r.id }}" {% if trip and trip.request_id==r.id %}selected{% endif %}>{{ r.reference_number }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Purpose <span class="text-red-500">*</span></label>
+          <input name="purpose" value="{{ trip.purpose if trip else '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Start point <span class="text-red-500">*</span></label>
+          <input name="start_point" value="{{ trip.start_point if trip else '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Destination <span class="text-red-500">*</span></label>
+          <input name="destination" value="{{ trip.destination if trip else '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Departure date/time</label>
+          <input name="departure_datetime" type="datetime-local" value="{{ trip.departure_datetime.strftime('%Y-%m-%dT%H:%M') if trip and trip.departure_datetime else '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Start odometer reading</label>
+          <input name="start_odometer" type="number" value="{{ trip.start_odometer if trip.start_odometer is not none else '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+          <p class="text-xs text-gray-500 mt-1">Distance auto-calculated from end odometer</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Arrival date/time</label>
+          <input name="arrival_datetime" type="datetime-local" value="{{ trip.arrival_datetime.strftime('%Y-%m-%dT%H:%M') if trip and trip.arrival_datetime else '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">End odometer reading</label>
+          <input name="end_odometer" type="number" value="{{ trip.end_odometer if trip.end_odometer is not none else '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Fuel issued (litres)</label>
+          <input name="fuel_issued" type="number" step="0.01" value="{{ trip.fuel_issued if trip.fuel_issued is not none else '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Fuel consumed (litres)</label>
+          <input name="fuel_consumed" type="number" step="0.01" value="{{ trip.fuel_consumed if trip.fuel_consumed is not none else '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Passenger count</label>
+          <input name="passenger_count" type="number" value="{{ trip.passenger_count if trip.passenger_count is not none else 0 }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-tbc-blue focus:outline-none">
+            <option value="draft" {% if not trip or trip.status=='draft' %}selected{% endif %}>Draft</option>
+            <option value="in_progress" {% if trip and trip.status=='in_progress' %}selected{% endif %}>In Progress</option>
+            <option value="completed" {% if trip and trip.status=='completed' %}selected{% endif %}>Completed</option>
+            <option value="cancelled" {% if trip and trip.status=='cancelled' %}selected{% endif %}>Cancelled</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
+        <textarea name="remarks" rows="2">{{ trip.remarks if trip else '' }}</textarea>
+      </div>
+      <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
+        <a href="/trips/" class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Cancel</a>
+        <button type="submit" class="bg-tbc-blue text-white px-4 py-2 rounded-lg hover:bg-tbc-blue/90 transition">Save journey</button>
+      </div>
+    </form>
+    {% if trip and trip.total_distance is not none %}
+    <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+      <p class="text-sm text-blue-800"><strong>Calculated distance:</strong> {{ trip.total_distance }} km (end odometer − start odometer)</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
