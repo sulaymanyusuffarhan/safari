@@ -145,8 +145,15 @@ app.add_middleware(
 # Root / shell pages
 # ---------------------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
-async def root(request: Request, user: User = Depends(get_current_user)):
-    return RedirectResponse(url="/dashboard")
+async def root(request: Request, db: Session = Depends(get_db)):
+    from app.auth import get_user_by_username
+    # If no users exist, redirect to setup
+    if db.query(User).first() is None:
+        return RedirectResponse(url="/auth/setup", status_code=303)
+    # If users exist but not authenticated, redirect to login
+    if not request.session.get("user_id"):
+        return RedirectResponse(url="/auth/login", status_code=303)
+    return RedirectResponse(url="/dashboard", status_code=303)
 
 
 @app.get("/dashboard", response_class=HTMLResponse, tags=["dashboard"])
