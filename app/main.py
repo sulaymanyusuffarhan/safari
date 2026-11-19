@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
 from app.config import settings
-from app.database import engine, Base, get_db
+from app.database import engine, Base, Session, get_db
 from app.auth import get_current_user, require_user
 from app.models import User
 from app.seed import seed_if_empty
