@@ -31,7 +31,7 @@ class Settings(BaseSettings):
 
     # Optional integrations
     SMTP_HOST: str = ""
-    SMTP_PORT: int = 587
+    SMTP_PORT: Optional[int] = 587
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
     SMTP_FROM: str = ""
