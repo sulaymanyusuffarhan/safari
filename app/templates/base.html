@@ -106,9 +106,9 @@
   {% endif %}
   {% endwith %}
 
-  <div class="flex flex-1 relative">
+  <div class="flex flex-1 relative min-h-0 overflow-y-auto">
     <!-- Sidebar -->
-    <aside id="sidebar" class="bg-white border-r border-gray-200 flex flex-col z-10 transition-all duration-300 fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 md:w-64 md:overflow-y-auto">
+    <aside id="sidebar" class="bg-white border-r border-gray-200 flex flex-col z-10 transition-all duration-300 fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 md:w-64">
       <div class="p-4 border-b border-gray-100">
         <div class="flex items-center gap-2">
           <img src="/static/images/emblem.png" alt="emblem" class="h-7 w-7 rounded">
@@ -119,7 +119,7 @@
         </div>
       </div>
 
-      <nav class="flex-1 overflow-y-auto p-2 space-y-1" aria-label="Main navigation">
+      <nav class="flex-1 min-h-0 overflow-y-auto p-2 space-y-1" aria-label="Main navigation">
         <div class="px-3 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ t('dashboard', current_lang(request)) }}</div>
 
         {% set perms = request.session.get('_perms', []) %}
@@ -224,7 +224,7 @@
     <div id="sidebarOverlay" class="fixed inset-0 bg-black opacity-50 z-20 hidden md:hidden" onclick="closeSidebar()"></div>
 
     <!-- Main content -->
-    <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative z-0">
+    <main class="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 lg:p-8 relative z-0">
       {% block content %}{% endblock %}
     </main>
   </div>
