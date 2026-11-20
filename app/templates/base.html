@@ -58,6 +58,7 @@
     </div>
 
     <div class="flex items-center gap-3">
+      {% if user %}
       <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full text-xs font-medium text-gray-700">
         <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
         {{ user.employee.full_name if user.employee else user.username }}
@@ -74,6 +75,9 @@
           <a href="/auth/logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-sign-out-alt mr-2"></i> {{ t('logout', current_lang(request)) }}</a>
         </div>
       </div>
+      {% else %}
+      <a href="/auth/login" class="px-4 py-2 text-sm text-tbc-blue hover:bg-tbc-blue/10 rounded-lg">{{ t('login', current_lang(request)) }}</a>
+      {% endif %}
     </div>
   </header>
 
@@ -119,7 +123,7 @@
         <div class="px-3 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ t('dashboard', current_lang(request)) }}</div>
 
         {% set perms = request.session.get('_perms', []) %}
-        {% set user_role = user.role.code if user.role else '' %}
+        {% set user_role = user.role.code if user and user.role else '' %}
 
         <a href="/dashboard" class="sidebar-item active block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg flex items-center gap-3 hover:bg-gray-50 hover:text-tbc-blue transition">
           <i class="fas fa-chart-pie w-5 text-tbc-blue"></i> {{ t('dashboard', current_lang(request)) }}
